@@ -1,0 +1,21 @@
+---
+- hosts: all
+  tasks:
+    - name: get disk usage
+      command: df -h
+      register: disk_usage
+    
+    - name: check disk space available
+      shell: df -h / | awk 'NR=2 {print $5}'
+      register: disk_usage
+
+    # Send Discord message
+    - name: send discord message
+      uri:
+        url: "https://discord.com/api/webhooks/995710997090271263/7DjD6loeVxMmRmenzo8mzHFI3Z3jrOwoLDbXDhFrAsEbMK2XOeWpf6hQsQFSYm2HxRNf"
+        method: POST
+        body_format: json
+        body: '{"content": "Disk space on {{ inventory_hostname }} is above 80%!"}'
+        headers:
+          Content-Type: application/json
+        when: disk_usage.stdout[:-1]|int > 80
